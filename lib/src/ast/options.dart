@@ -9,6 +9,8 @@ import 'size.dart';
 import 'style.dart';
 import 'syntax_tree.dart';
 
+typedef OnTapCallback = void Function(String id);
+
 /// Options for equation element rendering.
 ///
 /// Every [GreenNode] is rendered with an [MathOptions]. It controls their size,
@@ -72,6 +74,8 @@ class MathOptions {
   /// {@endtemplate}
   final double logicalPpi;
 
+  final OnTapCallback? onTapCallback;
+
   MathOptions._({
     required this.fontSize,
     required this.logicalPpi,
@@ -80,6 +84,8 @@ class MathOptions {
     this.sizeUnderTextStyle = MathSize.normalsize,
     this.textFontOptions,
     this.mathFontOptions,
+    this.onTapCallback,
+
     // required this.maxSize,
     // required this.minRuleThickness,
   });
@@ -99,6 +105,7 @@ class MathOptions {
     FontOptions? mathFontOptions,
     double? fontSize,
     double? logicalPpi,
+    OnTapCallback? onTapCallback,
     // required this.maxSize,
     // required this.minRuleThickness,
   }) {
@@ -116,6 +123,7 @@ class MathOptions {
       sizeUnderTextStyle: sizeUnderTextStyle,
       mathFontOptions: mathFontOptions,
       textFontOptions: textFontOptions,
+      onTapCallback: onTapCallback,
     );
   }
 
@@ -246,6 +254,7 @@ class MathOptions {
         sizeUnderTextStyle: sizeUnderTextStyle ?? this.sizeUnderTextStyle,
         textFontOptions: textFontOptions ?? this.textFontOptions,
         mathFontOptions: mathFontOptions ?? this.mathFontOptions,
+        onTapCallback: onTapCallback,
         // maxSize: maxSize ?? this.maxSize,
         // minRuleThickness: minRuleThickness ?? this.minRuleThickness,
       );

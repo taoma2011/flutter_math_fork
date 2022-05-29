@@ -306,7 +306,7 @@ class RenderLine extends RenderBox
     return maxHeightAboveBaseline;
   }
 
-  @protected
+  // @protected
   late List<double> caretOffsets;
 
   List<double>? alignColWidth;
@@ -485,6 +485,20 @@ class RenderLine extends RenderBox
     this._overflow = mainPos - size.width;
 
     return size;
+  }
+
+  int getCaretIndexForPoint2(Offset globalOffset) {
+    final localOffset = globalToLocal(globalOffset);
+    var minDist = double.infinity;
+    var minPosition = 0;
+    for (var i = 0; i < caretOffsets.length; i++) {
+      final dist = (caretOffsets[i] - localOffset.dx).abs();
+      if (dist <= minDist) {
+        minDist = dist;
+        minPosition = i;
+      }
+    }
+    return minPosition;
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
+import 'package:uuid/uuid.dart';
 
 import '../render/layout/line.dart';
 import '../render/layout/line_editable.dart';
@@ -17,9 +18,12 @@ import '../widgets/mode.dart';
 import '../widgets/selectable.dart';
 import 'nodes/space.dart';
 import 'nodes/sqrt.dart';
+import 'nodes/symbol.dart';
 import 'options.dart';
 import 'spacing.dart';
 import 'types.dart';
+
+var uuid = Uuid();
 
 /// Roslyn's Red-Green Tree
 ///
@@ -560,6 +564,47 @@ class EquationRowNode extends ParentableNode<GreenNode>
 
     final widget = Consumer<FlutterMathMode>(builder: (context, mode, child) {
       if (mode == FlutterMathMode.view) {
+        /*
+        var stackChildren = <Widget>[
+          Line(
+            key: _key!,
+            children: lineChildren,
+          )
+        ];
+        
+        var currentFrameStart = -1;
+        for (var i = 0; i < children.length; i++) {
+          var c = children[i];
+          if (c is SymbolNode) {
+            if (currentFrameStart < 0) {
+              currentFrameStart = i;
+            }
+          } else {
+            if (currentFrameStart >= 0) {
+              stackChildren.add(Positioned.fill(
+                  left: currentFrameStart * 10,
+                  right: null,
+                  child: Container(
+                      width: (i - currentFrameStart) * 10,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.purple),
+                      ))));
+              currentFrameStart = -1;
+            }
+          }
+        }
+        if (currentFrameStart >= 0) {
+          stackChildren.add(Positioned.fill(
+              left: currentFrameStart * 10,
+              right: null,
+              child: Container(
+                  width: (children.length - currentFrameStart) * 10,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.purple),
+                  ))));
+        }
+        return Stack(fit: StackFit.passthrough, children: stackChildren);
+        */
         return Line(
           key: _key!,
           children: lineChildren,
@@ -792,6 +837,8 @@ abstract class LeafNode extends GreenNode {
 
   @override
   int get editingWidth => 1;
+
+  String id = uuid.v4();
 }
 
 /// Type of atoms. See TeXBook Chap.17
@@ -844,18 +891,33 @@ class TemporaryNode extends LeafNode {
 }
 
 class BuildResult {
-  final Widget widget;
+  // final Widget widget;
+  Widget widget;
   final MathOptions options;
   final double italic;
   final double skew;
   final List<BuildResult>? results;
-  const BuildResult({
+  String nodeId;
+  BuildResult({
     required this.widget,
     required this.options,
     this.italic = 0.0,
     this.skew = 0.0,
     this.results,
+    this.nodeId = '',
   });
+  void wrapWidget(String id) {
+    nodeId = id;
+    widget = GestureDetector(
+        onTap: () {
+          if (options.onTapCallback != null) {
+            options.onTapCallback!(nodeId);
+          }
+        },
+        child: Container(
+            decoration: BoxDecoration(border: Border.all(color: Colors.red)),
+            child: widget));
+  }
 }
 
 void _traverseNonSpaceNodes(

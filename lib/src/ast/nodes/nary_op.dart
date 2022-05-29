@@ -195,12 +195,12 @@ class NaryOperatorNode extends SlotableNode<EquationRowNode?> {
       oldOptions.sizeMultiplier != newOptions.sizeMultiplier;
 
   @override
-  NaryOperatorNode updateChildren(List<EquationRowNode?> newChildren) =>
+  NaryOperatorNode updateChildren(List<GreenNode?> newChildren) =>
       NaryOperatorNode(
         operator: operator,
-        lowerLimit: newChildren[0],
-        upperLimit: newChildren[1],
-        naryand: newChildren[2]!,
+        lowerLimit: newChildren[0] as EquationRowNode,
+        upperLimit: newChildren[1] as EquationRowNode,
+        naryand: newChildren[2]! as EquationRowNode,
         limits: limits,
         allowLargeOp: allowLargeOp,
       );
