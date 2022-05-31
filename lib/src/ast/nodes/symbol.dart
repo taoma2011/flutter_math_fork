@@ -61,7 +61,7 @@ class SymbolNode extends LeafNode {
         overrideFont: overrideFont,
         mode: mode,
         options: options,
-      ) /*..wrapWidget(id)*/;
+      );
     } else if (expanded.length > 1) {
       if (isCombiningMark(expanded[1])) {
         if (expanded[0] == 'i') {

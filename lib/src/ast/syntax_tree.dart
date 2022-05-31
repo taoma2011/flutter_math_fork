@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
-import 'package:uuid/uuid.dart';
 
 import '../render/layout/line.dart';
 import '../render/layout/line_editable.dart';
@@ -22,8 +21,6 @@ import 'nodes/symbol.dart';
 import 'options.dart';
 import 'spacing.dart';
 import 'types.dart';
-
-var uuid = Uuid();
 
 /// Roslyn's Red-Green Tree
 ///
@@ -837,8 +834,6 @@ abstract class LeafNode extends GreenNode {
 
   @override
   int get editingWidth => 1;
-
-  String id = uuid.v4();
 }
 
 /// Type of atoms. See TeXBook Chap.17
@@ -897,27 +892,13 @@ class BuildResult {
   final double italic;
   final double skew;
   final List<BuildResult>? results;
-  String nodeId;
   BuildResult({
     required this.widget,
     required this.options,
     this.italic = 0.0,
     this.skew = 0.0,
     this.results,
-    this.nodeId = '',
   });
-  void wrapWidget(String id) {
-    nodeId = id;
-    widget = GestureDetector(
-        onTap: () {
-          if (options.onTapCallback != null) {
-            options.onTapCallback!(nodeId);
-          }
-        },
-        child: Container(
-            decoration: BoxDecoration(border: Border.all(color: Colors.red)),
-            child: widget));
-  }
 }
 
 void _traverseNonSpaceNodes(

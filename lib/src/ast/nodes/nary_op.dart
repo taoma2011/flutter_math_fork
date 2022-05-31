@@ -48,6 +48,7 @@ class NaryOperatorNode extends SlotableNode<EquationRowNode?> {
     this.allowLargeOp = true,
   });
 
+  GlobalKey? key;
   @override
   BuildResult buildWidget(
       MathOptions options, List<BuildResult?> childBuildResults) {
@@ -153,7 +154,9 @@ class NaryOperatorNode extends SlotableNode<EquationRowNode?> {
         );
       }
     }
+    key = GlobalKey();
     final widget = Line(
+      key: key,
       children: [
         LineElement(
           child: operatorWidget,
@@ -195,12 +198,12 @@ class NaryOperatorNode extends SlotableNode<EquationRowNode?> {
       oldOptions.sizeMultiplier != newOptions.sizeMultiplier;
 
   @override
-  NaryOperatorNode updateChildren(List<GreenNode?> newChildren) =>
+  NaryOperatorNode updateChildren(List<EquationRowNode?> newChildren) =>
       NaryOperatorNode(
         operator: operator,
-        lowerLimit: newChildren[0] as EquationRowNode,
-        upperLimit: newChildren[1] as EquationRowNode,
-        naryand: newChildren[2]! as EquationRowNode,
+        lowerLimit: newChildren[0],
+        upperLimit: newChildren[1],
+        naryand: newChildren[2]!,
         limits: limits,
         allowLargeOp: allowLargeOp,
       );
