@@ -72,8 +72,6 @@ class MathOptions {
   /// {@endtemplate}
   final double logicalPpi;
 
-  final OnTapCallback? onTapCallback;
-
   MathOptions._({
     required this.fontSize,
     required this.logicalPpi,
@@ -82,7 +80,6 @@ class MathOptions {
     this.sizeUnderTextStyle = MathSize.normalsize,
     this.textFontOptions,
     this.mathFontOptions,
-    this.onTapCallback,
 
     // required this.maxSize,
     // required this.minRuleThickness,
