@@ -22,6 +22,7 @@
 // SOFTWARE.
 
 import 'package:collection/collection.dart';
+import 'package:flutter_math_fork/src/ast/nodes/stretchy_op.dart';
 
 import '../../../ast/nodes/left_right.dart';
 import '../../../ast/nodes/matrix.dart';
@@ -58,6 +59,7 @@ const arrayEntries = {
   ),
   ['smallmatrix']: EnvSpec(numArgs: 0, handler: _smallMatrixHandler),
   ['subarray']: EnvSpec(numArgs: 1, handler: _subArrayHandler),
+  ['CD']: EnvSpec(numArgs: 1, handler: _cdHandler),
 };
 
 enum ColSeparationType {
@@ -334,3 +336,384 @@ GreenNode _subArrayHandler(TexParser parser, EnvContext context) {
   }
   return res;
 }
+
+bool isStartOfArrow(GreenNode node) {
+  return (node is SymbolNode && node.symbol == "@");
+}
+
+GreenNode _cdHandler(TexParser parser, EnvContext context) {
+  parser.macroExpander.beginGroup();
+  parser.macroExpander.macros
+      .set("\\cr", MacroDefinition.fromString("\\\\\\relax"));
+  parser.macroExpander.beginGroup();
+  var parsedRows = <List<GreenNode>>[];
+  while (true) {
+    // eslint-disable-line no-constant-condition
+    // Get the parse nodes for the next row.
+    parsedRows.add(
+        parser.parseExpression(breakOnInfix: false, breakOnTokenText: "\\\\"));
+    parser.macroExpander.endGroup();
+    parser.macroExpander.beginGroup();
+    var next = parser.fetch().text;
+    if (next == "&" || next == "\\\\") {
+      parser.consume();
+    } else if (next == "\\end") {
+      if (parsedRows[parsedRows.length - 1].length == 0) {
+        parsedRows.removeLast(); // final row ended in \\
+      }
+      break;
+    } else {
+      throw ParseException("Expected \\\\ or \\cr or \\end", parser.nextToken);
+    }
+  }
+
+  var row = <EquationRowNode>[];
+  final body = [row];
+
+  // Loop thru the parse nodes. Collect them into cells and arrows.
+  for (int i = 0; i < parsedRows.length; i++) {
+    // Start a new row.
+    var rowNodes = parsedRows[i];
+    // Create the first cell.
+    var cell = EquationRowNode(children: []);
+
+    for (int j = 0; j < rowNodes.length; j++) {
+      if (!isStartOfArrow(rowNodes[j])) {
+        // If a parseNode is not an arrow, it goes into a cell.
+        cell.children.add(rowNodes[j]);
+      } else {
+        // Parse node j is an "@", the start of an arrow.
+        // Before starting on the arrow, push the cell into `row`.
+        row.add(cell);
+
+        // Now collect parseNodes into an arrow.
+        // The character after "@" defines the arrow type.
+        j += 1;
+        var arrowChar = (rowNodes[j] as SymbolNode).symbol;
+
+        // Create two empty label nodes. We may or may not use them.
+        /*
+                const labels: ParseNode<"ordgroup">[] = new Array(2);
+                labels[0] = {type: "ordgroup", mode: "math", body: []};
+                labels[1] = {type: "ordgroup", mode: "math", body: []};
+
+                // Process the arrow.
+                if ("=|.".indexOf(arrowChar) > -1) {
+                    // Three "arrows", ``@=`, `@|`, and `@.`, do not take labels.
+                    // Do nothing here.
+                } else if ("<>AV".indexOf(arrowChar) > -1) {
+                    // Four arrows, `@>>>`, `@<<<`, `@AAA`, and `@VVV`, each take
+                    // two optional labels. E.g. the right-point arrow syntax is
+                    // really:  @>{optional label}>{optional label}>
+                    // Collect parseNodes into labels.
+                    for (let labelNum = 0; labelNum < 2; labelNum++) {
+                        let inLabel = true;
+                        for (let k = j + 1; k < rowNodes.length; k++) {
+                            if (isLabelEnd(rowNodes[k], arrowChar)) {
+                                inLabel = false;
+                                j = k;
+                                break;
+                            }
+                            if (isStartOfArrow(rowNodes[k])) {
+                                throw new ParseError("Missing a " + arrowChar +
+                                " character to complete a CD arrow.", rowNodes[k]);
+                            }
+
+                            labels[labelNum].body.push(rowNodes[k]);
+                        }
+                        if (inLabel) {
+                            // isLabelEnd never returned a true.
+                            throw new ParseError("Missing a " + arrowChar +
+                                " character to complete a CD arrow.", rowNodes[j]);
+                        }
+                    }
+                } else {
+                    throw new ParseError(`Expected one of "<>AV=|." after @`,
+                        rowNodes[j]);
+                }
+                */
+        // Now join the arrow to its labels.
+        // const arrow: AnyParseNode = cdArrow(arrowChar, labels, parser);
+        var arrow = StretchyOpNode(
+            above: EquationRowNode(children: [SymbolNode(symbol: "")]),
+            below: EquationRowNode(children: [SymbolNode(symbol: "")]),
+            symbol: "");
+
+        row.add(EquationRowNode(children: [arrow]));
+        // In CD's syntax, cells are implicit. That is, everything that
+        // is not an arrow gets collected into a cell. So create an empty
+        // cell now. It will collect upcoming parseNodes.
+        cell = EquationRowNode(children: []);
+      }
+    }
+    if (i % 2 == 0) {
+      // Even-numbered rows consist of: cell, arrow, cell, arrow, ... cell
+      // The last cell is not yet pushed into `row`, so:
+      row.add(cell);
+    } else {
+      // Odd-numbered rows consist of: vert arrow, empty cell, ... vert arrow
+      // Remove the empty cell that was placed at the beginning of `row`.
+      row.removeAt(0);
+    }
+    row = [];
+    body.add(row);
+  }
+
+  // End row group
+  parser.macroExpander.endGroup();
+  // End array group defining \\
+  parser.macroExpander.endGroup();
+
+  // define column separation.
+  /*
+  const cols = new Array(body[0].length).fill({
+    type: "align",
+    align: "c",
+    pregap: 0.25, // CD package sets \enskip between columns.
+    postgap: 0.25, // So pre and post each get half an \enskip, i.e. 0.25em.
+  });
+  */
+  return MatrixNode(
+    body: body,
+    // vLines: separators,
+    // columnAligns: colAligns,
+    // rowSpacings: rowGaps,
+    // arrayStretch: arrayStretch,
+    // hLines: hLinesBeforeRow,
+    // hskipBeforeAndAfter: hskipBeforeAndAfter,
+    // isSmall: isSmall,
+  );
+  /*
+   {
+    type: "array",
+    mode: "math",
+    body,
+    arraystretch: 1,
+    addJot: true,
+    rowGaps: [null],
+    cols,
+    colSeparationType: "CD",
+    hLinesBeforeRow: new Array(body.length + 1).fill([]),
+  };*/
+
+/*
+  
+  // Start group for first cell
+  parser.macroExpander.beginGroup();
+
+  var row = <EquationRowNode>[];
+  final body = [row];
+  final rowGaps = <Measurement>[];
+  final hLinesBeforeRow = <MatrixSeparatorStyle>[];
+
+  // Test for \hline at the top of the array.
+  hLinesBeforeRow
+      .add(getHLines(parser).lastOrNull ?? MatrixSeparatorStyle.none);
+
+  while (true) {
+    // Parse each cell in its own group (namespace)
+    final cellBody =
+        parser.parseExpression(breakOnInfix: false, breakOnTokenText: '\\cr');
+    parser.macroExpander.endGroup();
+    parser.macroExpander.beginGroup();
+
+    final cell = style == null
+        ? cellBody.wrapWithEquationRow()
+        : StyleNode(
+            children: cellBody,
+            optionsDiff: OptionsDiff(style: style),
+          ).wrapWithEquationRow();
+    row.add(cell);
+
+    final next = parser.fetch().text;
+    if (next == '&') {
+      parser.consume();
+    } else if (next == '\\end') {
+      // Arrays terminate newlines with `\crcr` which consumes a `\cr` if
+      // the last line is empty.
+      // NOTE: Currently, `cell` is the last item added into `row`.
+      if (row.length == 1 && cellBody.isEmpty) {
+        body.removeLast();
+      }
+      if (hLinesBeforeRow.length < body.length + 1) {
+        hLinesBeforeRow.add(MatrixSeparatorStyle.none);
+      }
+      break;
+    } else if (next == '\\cr') {
+      final cr = assertNodeType<CrNode>(parser.parseFunction(null, null, null));
+      rowGaps.add(cr.size ?? Measurement.zero);
+
+      // check for \hline(s) following the row separator
+      hLinesBeforeRow
+          .add(getHLines(parser).lastOrNull ?? MatrixSeparatorStyle.none);
+
+      row = [];
+      body.add(row);
+    } else {
+      throw ParseException(
+          'Expected & or \\\\ or \\cr or \\end', parser.nextToken);
+    }
+  }
+
+  // End cell group
+  parser.macroExpander.endGroup();
+  // End array group defining \\
+  parser.macroExpander.endGroup();
+
+  return MatrixNode(
+    body: body,
+    vLines: separators,
+    columnAligns: colAligns,
+    rowSpacings: rowGaps,
+    arrayStretch: arrayStretch,
+    hLines: hLinesBeforeRow,
+    hskipBeforeAndAfter: hskipBeforeAndAfter,
+    isSmall: isSmall,
+  );
+  */
+}
+/*
+export function parseCD(parser: Parser): ParseNode<"array"> {
+    // Get the array's parse nodes with \\ temporarily mapped to \cr.
+    const parsedRows: AnyParseNode[][] = [];
+    parser.gullet.beginGroup();
+    parser.gullet.macros.set("\\cr", "\\\\\\relax");
+    parser.gullet.beginGroup();
+    while (true) {  // eslint-disable-line no-constant-condition
+        // Get the parse nodes for the next row.
+        parsedRows.push(parser.parseExpression(false, "\\\\"));
+        parser.gullet.endGroup();
+        parser.gullet.beginGroup();
+        const next = parser.fetch().text;
+        if (next === "&" || next === "\\\\") {
+            parser.consume();
+        } else if (next === "\\end") {
+            if (parsedRows[parsedRows.length - 1].length === 0) {
+                parsedRows.pop(); // final row ended in \\
+            }
+            break;
+        } else {
+            throw new ParseError("Expected \\\\ or \\cr or \\end",
+                                 parser.nextToken);
+        }
+    }
+
+    let row = [];
+    const body = [row];
+   // Loop thru the parse nodes. Collect them into cells and arrows.
+    for (let i = 0; i < parsedRows.length; i++) {
+        // Start a new row.
+        const rowNodes = parsedRows[i];
+        // Create the first cell.
+        let cell = newCell();
+
+        for (let j = 0; j < rowNodes.length; j++) {
+            if (!isStartOfArrow(rowNodes[j])) {
+                // If a parseNode is not an arrow, it goes into a cell.
+                cell.body.push(rowNodes[j]);
+            } else {
+                // Parse node j is an "@", the start of an arrow.
+                // Before starting on the arrow, push the cell into `row`.
+                row.push(cell);
+
+                // Now collect parseNodes into an arrow.
+                // The character after "@" defines the arrow type.
+                j += 1;
+                const arrowChar = assertSymbolNodeType(rowNodes[j]).text;
+
+                // Create two empty label nodes. We may or may not use them.
+                const labels: ParseNode<"ordgroup">[] = new Array(2);
+                labels[0] = {type: "ordgroup", mode: "math", body: []};
+                labels[1] = {type: "ordgroup", mode: "math", body: []};
+
+                // Process the arrow.
+                if ("=|.".indexOf(arrowChar) > -1) {
+                    // Three "arrows", ``@=`, `@|`, and `@.`, do not take labels.
+                    // Do nothing here.
+                } else if ("<>AV".indexOf(arrowChar) > -1) {
+                    // Four arrows, `@>>>`, `@<<<`, `@AAA`, and `@VVV`, each take
+                    // two optional labels. E.g. the right-point arrow syntax is
+                    // really:  @>{optional label}>{optional label}>
+                    // Collect parseNodes into labels.
+                    for (let labelNum = 0; labelNum < 2; labelNum++) {
+                        let inLabel = true;
+                        for (let k = j + 1; k < rowNodes.length; k++) {
+                            if (isLabelEnd(rowNodes[k], arrowChar)) {
+                                inLabel = false;
+                                j = k;
+                                break;
+                            }
+                            if (isStartOfArrow(rowNodes[k])) {
+                                throw new ParseError("Missing a " + arrowChar +
+                                " character to complete a CD arrow.", rowNodes[k]);
+                            }
+
+                            labels[labelNum].body.push(rowNodes[k]);
+                        }
+                        if (inLabel) {
+                            // isLabelEnd never returned a true.
+                            throw new ParseError("Missing a " + arrowChar +
+                                " character to complete a CD arrow.", rowNodes[j]);
+                        }
+                    }
+                } else {
+                    throw new ParseError(`Expected one of "<>AV=|." after @`,
+                        rowNodes[j]);
+                }
+               // Now join the arrow to its labels.
+                const arrow: AnyParseNode = cdArrow(arrowChar, labels, parser);
+
+                // Wrap the arrow in  ParseNode<"styling">.
+                // This is done to match parseArray() behavior.
+                const wrappedArrow = {
+                    type: "styling",
+                    body: [arrow],
+                    mode: "math",
+                    style: "display", // CD is always displaystyle.
+                };
+                row.push(wrappedArrow);
+                // In CD's syntax, cells are implicit. That is, everything that
+                // is not an arrow gets collected into a cell. So create an empty
+                // cell now. It will collect upcoming parseNodes.
+                cell = newCell();
+            }
+        }
+        if (i % 2 === 0) {
+            // Even-numbered rows consist of: cell, arrow, cell, arrow, ... cell
+            // The last cell is not yet pushed into `row`, so:
+            row.push(cell);
+        } else {
+            // Odd-numbered rows consist of: vert arrow, empty cell, ... vert arrow
+            // Remove the empty cell that was placed at the beginning of `row`.
+            row.shift();
+        }
+        row = [];
+        body.push(row);
+    }
+
+    // End row group
+    parser.gullet.endGroup();
+    // End array group defining \\
+    parser.gullet.endGroup();
+
+    // define column separation.
+    const cols = new Array(body[0].length).fill({
+        type: "align",
+        align: "c",
+        pregap: 0.25,  // CD package sets \enskip between columns.
+        postgap: 0.25, // So pre and post each get half an \enskip, i.e. 0.25em.
+    });
+
+    return {
+        type: "array",
+        mode: "math",
+        body,
+        arraystretch: 1,
+        addJot: true,
+        rowGaps: [null],
+        cols,
+        colSeparationType: "CD",
+        hLinesBeforeRow: new Array(body.length + 1).fill([]),
+    };
+}
+*/
