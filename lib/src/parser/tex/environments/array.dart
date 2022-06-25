@@ -341,10 +341,24 @@ bool isStartOfArrow(GreenNode node) {
   return (node is SymbolNode && node.symbol == "@");
 }
 
+Map<String, String> cdArrowFunctionName = {
+  ">": "\\\\cdrightarrow",
+  "<": "\\\\cdleftarrow",
+  "=": "\\\\cdlongequal",
+  "A": "\\uparrow",
+  "V": "\\downarrow",
+  "|": "\\Vert",
+  ".": "no arrow",
+};
+
+bool isLabelEnd(GreenNode node, String endChar) {
+  return (node is SymbolNode && node.symbol == endChar);
+}
+
 GreenNode _cdHandler(TexParser parser, EnvContext context) {
   parser.macroExpander.beginGroup();
-  parser.macroExpander.macros
-      .set("\\cr", MacroDefinition.fromString("\\\\\\relax"));
+  // parser.macroExpander.macros
+  // .set("\\cr", MacroDefinition.fromString("\\\\\\relax"));
   parser.macroExpander.beginGroup();
   var parsedRows = <List<GreenNode>>[];
   while (true) {
@@ -380,7 +394,13 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
     for (int j = 0; j < rowNodes.length; j++) {
       if (!isStartOfArrow(rowNodes[j])) {
         // If a parseNode is not an arrow, it goes into a cell.
-        cell.children.add(rowNodes[j]);
+        // cell.children.add(rowNodes[j]);
+        if (rowNodes[j] is CrNode) {
+          continue;
+        }
+        var oldChildren = cell.children;
+        oldChildren.add(rowNodes[j]);
+        cell.updateChildren(oldChildren);
       } else {
         // Parse node j is an "@", the start of an arrow.
         // Before starting on the arrow, push the cell into `row`.
@@ -392,52 +412,61 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
         var arrowChar = (rowNodes[j] as SymbolNode).symbol;
 
         // Create two empty label nodes. We may or may not use them.
-        /*
-                const labels: ParseNode<"ordgroup">[] = new Array(2);
-                labels[0] = {type: "ordgroup", mode: "math", body: []};
-                labels[1] = {type: "ordgroup", mode: "math", body: []};
 
-                // Process the arrow.
-                if ("=|.".indexOf(arrowChar) > -1) {
-                    // Three "arrows", ``@=`, `@|`, and `@.`, do not take labels.
-                    // Do nothing here.
-                } else if ("<>AV".indexOf(arrowChar) > -1) {
-                    // Four arrows, `@>>>`, `@<<<`, `@AAA`, and `@VVV`, each take
-                    // two optional labels. E.g. the right-point arrow syntax is
-                    // really:  @>{optional label}>{optional label}>
-                    // Collect parseNodes into labels.
-                    for (let labelNum = 0; labelNum < 2; labelNum++) {
-                        let inLabel = true;
-                        for (let k = j + 1; k < rowNodes.length; k++) {
-                            if (isLabelEnd(rowNodes[k], arrowChar)) {
-                                inLabel = false;
-                                j = k;
-                                break;
-                            }
-                            if (isStartOfArrow(rowNodes[k])) {
-                                throw new ParseError("Missing a " + arrowChar +
-                                " character to complete a CD arrow.", rowNodes[k]);
-                            }
+        List<EquationRowNode> labels = [
+          EquationRowNode(children: []),
+          EquationRowNode(children: [])
+        ];
 
-                            labels[labelNum].body.push(rowNodes[k]);
-                        }
-                        if (inLabel) {
-                            // isLabelEnd never returned a true.
-                            throw new ParseError("Missing a " + arrowChar +
-                                " character to complete a CD arrow.", rowNodes[j]);
-                        }
-                    }
-                } else {
-                    throw new ParseError(`Expected one of "<>AV=|." after @`,
-                        rowNodes[j]);
-                }
-                */
+        // Process the arrow.
+        if ("=|.".indexOf(arrowChar) > -1) {
+          // Three "arrows", ``@=`, `@|`, and `@.`, do not take labels.
+          // Do nothing here.
+        } else if ("<>AV".indexOf(arrowChar) > -1) {
+          // Four arrows, `@>>>`, `@<<<`, `@AAA`, and `@VVV`, each take
+          // two optional labels. E.g. the right-point arrow syntax is
+          // really:  @>{optional label}>{optional label}>
+          // Collect parseNodes into labels.
+          for (int labelNum = 0; labelNum < 2; labelNum++) {
+            var inLabel = true;
+            for (int k = j + 1; k < rowNodes.length; k++) {
+              if (isLabelEnd(rowNodes[k], arrowChar)) {
+                inLabel = false;
+                j = k;
+                break;
+              }
+              if (isStartOfArrow(rowNodes[k])) {
+                throw ParseException("Missing a " +
+                        arrowChar +
+                        " character to complete a CD arrow." /*,
+                    rowNodes[k]*/
+                    );
+              }
+              var children = labels[labelNum].children;
+              children.add(rowNodes[k]);
+              labels[labelNum].updateChildren(children);
+            }
+            if (inLabel) {
+              // isLabelEnd never returned a true.
+              throw ParseException("Missing a " +
+                  arrowChar +
+                  " character to complete a CD arrow." /*, rowNodes[j]*/);
+            }
+          }
+        } else {
+          throw ParseException(
+              "Expected one of \"<>AV=|.\" after @" /*,
+                        rowNodes[j]*/
+              );
+        }
+
         // Now join the arrow to its labels.
         // const arrow: AnyParseNode = cdArrow(arrowChar, labels, parser);
+        var cdArrowFunction = cdArrowFunctionName[arrowChar] ?? "*";
         var arrow = StretchyOpNode(
-            above: EquationRowNode(children: [SymbolNode(symbol: "")]),
-            below: EquationRowNode(children: [SymbolNode(symbol: "")]),
-            symbol: "");
+            above: EquationRowNode(children: [SymbolNode(symbol: "*")]),
+            below: EquationRowNode(children: [SymbolNode(symbol: "*")]),
+            symbol: cdArrowFunction);
 
         row.add(EquationRowNode(children: [arrow]));
         // In CD's syntax, cells are implicit. That is, everything that

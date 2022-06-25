@@ -34,6 +34,9 @@ const _arrowEntries = {
     // The next 3 functions are here to support the mhchem extension.
     // Direct use of these functions is discouraged and may break someday.
     '\\xrightleftarrows', '\\xrightequilibrium', '\\xleftequilibrium',
+
+    // The next 3 functions are here only to support the {CD} environment.
+    "\\\\cdrightarrow", "\\\\cdleftarrow", "\\\\cdlongequal",
   ]: FunctionSpec(
     numArgs: 1,
     numOptionalArgs: 1,
@@ -71,6 +74,10 @@ const arrowCommandMapping = {
   '\\xrightleftarrows': '\u21c4',
   '\\xrightequilibrium': '\u21cc', // Not a perfect match.
   '\\xleftequilibrium': '\u21cb', // None better available.
+
+  "\\cdrightarrow": "\u2192",
+  "\\cdleftarrow": "\u2190",
+  "\\cdlongequal": "=",
 };
 
 GreenNode _arrowHandler(TexParser parser, FunctionContext context) {

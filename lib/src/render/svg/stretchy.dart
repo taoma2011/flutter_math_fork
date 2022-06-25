@@ -30,7 +30,11 @@ const katexImagesData = {
       _KatexImagesData(['leftarrow'], 0.888, 522, Alignment.topLeft),
   'xrightarrow':
       _KatexImagesData(['rightarrow'], 1.469, 522, Alignment.topRight),
+  "\\\\cdrightarrow": _KatexImagesData(
+      ["rightarrow"], 3.0, 522, Alignment.topRight), // CD minwwidth2.5pc
   'xleftarrow': _KatexImagesData(['leftarrow'], 1.469, 522, Alignment.topLeft),
+  "\\\\cdleftarrow":
+      _KatexImagesData(["leftarrow"], 3.0, 522, Alignment.topLeft),
   'Overrightarrow':
       _KatexImagesData(['doublerightarrow'], 0.888, 560, Alignment.topRight),
   'xRightarrow':
