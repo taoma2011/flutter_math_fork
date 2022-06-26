@@ -16,6 +16,28 @@ import '../spacing.dart';
 import '../syntax_tree.dart';
 import '../types.dart';
 
+class SizedDelimiterNode extends LeafNode {
+  final Mode mode;
+  final String? delim;
+  SizedDelimiterNode({this.delim, this.mode = Mode.math});
+  BuildResult buildWidget(
+      MathOptions options, List<BuildResult?> childBuildResults) {
+    return BuildResult(
+        options: options,
+        widget: buildCustomSizedDelimWidget(delim, 100, options));
+  }
+
+  @override
+  bool shouldRebuildWidget(MathOptions oldOptions, MathOptions newOptions) =>
+      false;
+
+  @override
+  AtomType get leftType => AtomType.ord;
+
+  @override
+  AtomType get rightType => AtomType.ord;
+}
+
 /// Left right node.
 class LeftRightNode extends SlotableNode<EquationRowNode> {
   /// Unicode symbol for the left delimiter character.

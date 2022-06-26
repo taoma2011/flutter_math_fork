@@ -359,17 +359,19 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
   parser.macroExpander.beginGroup();
   // parser.macroExpander.macros
   // .set("\\cr", MacroDefinition.fromString("\\\\\\relax"));
+  parser.macroExpander.macros.set('\\\\', MacroDefinition.fromString('\\cr'));
+
   parser.macroExpander.beginGroup();
   var parsedRows = <List<GreenNode>>[];
   while (true) {
     // eslint-disable-line no-constant-condition
     // Get the parse nodes for the next row.
     parsedRows.add(
-        parser.parseExpression(breakOnInfix: false, breakOnTokenText: "\\\\"));
+        parser.parseExpression(breakOnInfix: false, breakOnTokenText: "\\cr"));
     parser.macroExpander.endGroup();
     parser.macroExpander.beginGroup();
     var next = parser.fetch().text;
-    if (next == "&" || next == "\\\\") {
+    if (next == "&" || next == "\\cr") {
       parser.consume();
     } else if (next == "\\end") {
       if (parsedRows[parsedRows.length - 1].length == 0) {
@@ -463,12 +465,18 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
         // Now join the arrow to its labels.
         // const arrow: AnyParseNode = cdArrow(arrowChar, labels, parser);
         var cdArrowFunction = cdArrowFunctionName[arrowChar] ?? "*";
-        var arrow = StretchyOpNode(
-            above: EquationRowNode(children: [SymbolNode(symbol: "*")]),
-            below: EquationRowNode(children: [SymbolNode(symbol: "*")]),
-            symbol: cdArrowFunction);
+        GreenNode? arrow;
 
-        row.add(EquationRowNode(children: [arrow]));
+        if (cdArrowFunction == "\\downarrow") {
+          arrow = SizedDelimiterNode(delim: /*cdArrowFunction*/ '\u2193');
+        } else {
+          arrow = StretchyOpNode(
+              above: EquationRowNode(children: [SymbolNode(symbol: "*")]),
+              below: EquationRowNode(children: [SymbolNode(symbol: "*")]),
+              symbol: cdArrowFunction);
+        }
+
+        row.add(EquationRowNode(children: [arrow!]));
         // In CD's syntax, cells are implicit. That is, everything that
         // is not an arrow gets collected into a cell. So create an empty
         // cell now. It will collect upcoming parseNodes.
