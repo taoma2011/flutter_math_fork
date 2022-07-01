@@ -468,7 +468,11 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
         GreenNode? arrow;
 
         if (cdArrowFunction == "\\downarrow") {
-          arrow = SizedDelimiterNode(delim: /*cdArrowFunction*/ '\u2193');
+          // arrow = SizedDelimiterNode(delim: /*cdArrowFunction*/ '\u2193');
+          arrow = CdVertArrowNode(delim: '\u2193', labels: [
+            EquationRowNode(children: [SymbolNode(symbol: "*")]),
+            EquationRowNode(children: [SymbolNode(symbol: "*")])
+          ]);
         } else {
           arrow = StretchyOpNode(
               above: EquationRowNode(children: [SymbolNode(symbol: "*")]),

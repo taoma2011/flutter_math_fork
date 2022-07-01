@@ -38,6 +38,62 @@ class SizedDelimiterNode extends LeafNode {
   AtomType get rightType => AtomType.ord;
 }
 
+class CdVertArrowNode extends SlotableNode<EquationRowNode?> {
+  final Mode mode;
+  final List<EquationRowNode?> labels;
+  final String? delim;
+  CdVertArrowNode(
+      {required this.labels, required this.delim, this.mode = Mode.math});
+  BuildResult buildWidget(
+      MathOptions options, List<BuildResult?> childBuildResults) {
+    List<Widget> childrenWidget = [];
+    if (labels[0] != null) {
+      childrenWidget.add(LineElement(
+          trailingMargin:
+              getSpacingSize(labels[0]!.rightType, AtomType.rel, options.style)
+                  .toLpUnder(options),
+          child: childBuildResults[0]!.widget));
+    }
+    childrenWidget.add(buildCustomSizedDelimWidget(delim, 100, options));
+    if (labels[1] != null) {
+      childrenWidget.add(LineElement(
+          trailingMargin:
+              getSpacingSize(labels[1]!.rightType, AtomType.rel, options.style)
+                  .toLpUnder(options),
+          child: childBuildResults[1]!.widget));
+    }
+    return BuildResult(
+        options: options,
+        widget: Line(
+          children: childrenWidget,
+        ));
+  }
+
+  @override
+  List<MathOptions> computeChildOptions(MathOptions options) =>
+      List.filled(2, options, growable: false);
+
+  @override
+  bool shouldRebuildWidget(MathOptions oldOptions, MathOptions newOptions) =>
+      false;
+
+  @override
+  AtomType get leftType => AtomType.ord;
+
+  @override
+  AtomType get rightType => AtomType.ord;
+
+  @override
+  List<EquationRowNode?> computeChildren() => labels;
+
+  @override
+  CdVertArrowNode updateChildren(List<EquationRowNode?> newChildren) =>
+      CdVertArrowNode(
+        delim: delim,
+        labels: newChildren,
+      );
+}
+
 /// Left right node.
 class LeftRightNode extends SlotableNode<EquationRowNode> {
   /// Unicode symbol for the left delimiter character.
