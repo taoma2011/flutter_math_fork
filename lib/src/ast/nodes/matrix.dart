@@ -204,11 +204,11 @@ class MatrixNode extends SlotableNode<EquationRowNode?> {
       false;
 
   @override
-  MatrixNode updateChildren(List<EquationRowNode> newChildren) {
+  MatrixNode updateChildren(List<EquationRowNode?> newChildren) {
     assert(newChildren.length >= rows * cols);
-    var body = List<List<EquationRowNode>>.generate(
+    var body = List<List<EquationRowNode?>>.generate(
       rows,
-      (i) => newChildren.sublist(i * cols + (i + 1) * cols),
+      (i) => newChildren.sublist(i * cols, (i + 1) * cols),
       growable: false,
     );
     return copyWith(body: body);

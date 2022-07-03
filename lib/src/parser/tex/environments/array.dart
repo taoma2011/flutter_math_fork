@@ -467,9 +467,15 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
         var cdArrowFunction = cdArrowFunctionName[arrowChar] ?? "*";
         GreenNode? arrow;
 
-        if (cdArrowFunction == "\\downarrow") {
+        Map<String, String> vertArrowSymbols = {
+          "\\downarrow": '\u2193',
+          "\\uparrow": '\u2191',
+        };
+        if (cdArrowFunction == "\\downarrow" ||
+            cdArrowFunction == "\\uparrow") {
           // arrow = SizedDelimiterNode(delim: /*cdArrowFunction*/ '\u2193');
-          arrow = CdVertArrowNode(delim: '\u2193', labels: [
+          String symbol = vertArrowSymbols[cdArrowFunction]!;
+          arrow = CdVertArrowNode(delim: symbol, labels: [
             EquationRowNode(children: [SymbolNode(symbol: "*")]),
             EquationRowNode(children: [SymbolNode(symbol: "*")])
           ]);
