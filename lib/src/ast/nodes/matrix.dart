@@ -48,6 +48,8 @@ class MatrixNode extends SlotableNode<EquationRowNode?> {
   /// Special flags for `\smallmatrix`
   final bool isSmall;
 
+  final bool isCD;
+
   /// Align types for each column.
   final List<MatrixColumnAlign> columnAligns;
 
@@ -81,6 +83,7 @@ class MatrixNode extends SlotableNode<EquationRowNode?> {
     this.arrayStretch = 1.0,
     this.hskipBeforeAndAfter = false,
     this.isSmall = false,
+    this.isCD = false,
     required this.columnAligns,
     required this.vLines,
     required this.rowSpacings,
@@ -99,6 +102,7 @@ class MatrixNode extends SlotableNode<EquationRowNode?> {
     double arrayStretch = 1.0,
     bool hskipBeforeAndAfter = false,
     bool isSmall = false,
+    bool isCD = false,
     List<MatrixColumnAlign> columnAligns = const [],
     List<MatrixSeparatorStyle> vLines = const [],
     List<Measurement> rowSpacings = const [],
@@ -136,6 +140,7 @@ class MatrixNode extends SlotableNode<EquationRowNode?> {
       arrayStretch: arrayStretch,
       hskipBeforeAndAfter: hskipBeforeAndAfter,
       isSmall: isSmall,
+      isCD: isCD,
       columnAligns: sanitizedColumnAligns,
       vLines: sanitizedVLines,
       rowSpacings: sanitizedRowSpacing,
@@ -218,6 +223,7 @@ class MatrixNode extends SlotableNode<EquationRowNode?> {
     double? arrayStretch,
     bool? hskipBeforeAndAfter,
     bool? isSmall,
+    bool? isCD,
     List<MatrixColumnAlign>? columnAligns,
     List<MatrixSeparatorStyle>? columnLines,
     List<Measurement>? rowSpacing,
@@ -228,6 +234,7 @@ class MatrixNode extends SlotableNode<EquationRowNode?> {
         arrayStretch: arrayStretch ?? this.arrayStretch,
         hskipBeforeAndAfter: hskipBeforeAndAfter ?? this.hskipBeforeAndAfter,
         isSmall: isSmall ?? this.isSmall,
+        isCD: isCD ?? this.isCD,
         columnAligns: columnAligns ?? this.columnAligns,
         vLines: columnLines ?? this.vLines,
         rowSpacings: rowSpacing ?? this.rowSpacings,

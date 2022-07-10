@@ -522,6 +522,7 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
   */
   return MatrixNode(
     body: body,
+    isCD: true,
     // vLines: separators,
     // columnAligns: colAligns,
     // rowSpacings: rowGaps,

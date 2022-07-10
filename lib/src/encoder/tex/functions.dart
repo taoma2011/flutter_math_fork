@@ -15,6 +15,7 @@ import '../../ast/nodes/stretchy_op.dart';
 import '../../ast/nodes/style.dart';
 import '../../ast/nodes/symbol.dart';
 import '../../ast/nodes/under.dart';
+import '../../ast/nodes/matrix.dart';
 import '../../ast/options.dart';
 import '../../ast/size.dart';
 import '../../ast/style.dart';
@@ -43,6 +44,7 @@ part 'functions/sqrt.dart';
 part 'functions/stretchy_op.dart';
 part 'functions/style.dart';
 part 'functions/symbol.dart';
+part 'functions/matrix.dart';
 
 const Map<Type, EncoderFun> encoderFunctions = {
   EquationRowNode: _equationRowNodeEncoderFun,
@@ -57,6 +59,7 @@ const Map<Type, EncoderFun> encoderFunctions = {
   StretchyOpNode: _stretchyOpEncoder,
   SymbolNode: _symbolEncoder,
   StyleNode: _styleEncoder,
+  MatrixNode: _matrixEncoder,
 };
 
 EncodeResult _equationRowNodeEncoderFun(GreenNode node) =>
