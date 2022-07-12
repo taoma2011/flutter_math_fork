@@ -42,6 +42,7 @@ class CdVertArrowNode extends SlotableNode<EquationRowNode?> {
   final Mode mode;
   final List<EquationRowNode?> labels;
   final String? delim;
+  GlobalKey? key;
   CdVertArrowNode(
       {required this.labels, required this.delim, this.mode = Mode.math});
   BuildResult buildWidget(
@@ -62,9 +63,11 @@ class CdVertArrowNode extends SlotableNode<EquationRowNode?> {
                   .toLpUnder(options),
           child: childBuildResults[1]!.widget));
     }
+    key = GlobalKey();
     return BuildResult(
         options: options,
         widget: Line(
+          key: key,
           children: childrenWidget,
         ));
   }
