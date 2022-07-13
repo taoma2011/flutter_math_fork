@@ -27,7 +27,7 @@ class StretchyOpNode extends SlotableNode<EquationRowNode?> {
     required this.above,
     required this.below,
     required this.symbol,
-  }) : assert(above != null || below != null);
+  }) /*: assert(above != null || below != null)*/;
 
   @override
   BuildResult buildWidget(
@@ -90,7 +90,7 @@ class StretchyOpNode extends SlotableNode<EquationRowNode?> {
       oldOptions.sizeMultiplier != newOptions.sizeMultiplier;
 
   @override
-  StretchyOpNode updateChildren(List<EquationRowNode> newChildren) =>
+  StretchyOpNode updateChildren(List<EquationRowNode?> newChildren) =>
       StretchyOpNode(
         above: newChildren[0],
         below: newChildren[1],

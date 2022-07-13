@@ -415,10 +415,7 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
 
         // Create two empty label nodes. We may or may not use them.
 
-        List<EquationRowNode> labels = [
-          EquationRowNode(children: []),
-          EquationRowNode(children: [])
-        ];
+        List<EquationRowNode?> labels = [null, null];
 
         // Process the arrow.
         if ("=|.".indexOf(arrowChar) > -1) {
@@ -444,9 +441,12 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
                     rowNodes[k]*/
                     );
               }
-              var children = labels[labelNum].children;
+              if (labels[labelNum] == null) {
+                labels[labelNum] = EquationRowNode(children: []);
+              }
+              var children = labels[labelNum]!.children;
               children.add(rowNodes[k]);
-              labels[labelNum].updateChildren(children);
+              labels[labelNum]!.updateChildren(children);
             }
             if (inLabel) {
               // isLabelEnd never returned a true.
@@ -476,14 +476,12 @@ GreenNode _cdHandler(TexParser parser, EnvContext context) {
           // arrow = SizedDelimiterNode(delim: /*cdArrowFunction*/ '\u2193');
           String symbol = vertArrowSymbols[cdArrowFunction]!;
           arrow = CdVertArrowNode(delim: symbol, labels: [
-            EquationRowNode(children: [SymbolNode(symbol: "*")]),
-            EquationRowNode(children: [SymbolNode(symbol: "*")])
+            labels[0],
+            labels[1],
           ]);
         } else {
           arrow = StretchyOpNode(
-              above: EquationRowNode(children: [SymbolNode(symbol: "*")]),
-              below: EquationRowNode(children: [SymbolNode(symbol: "*")]),
-              symbol: cdArrowFunction);
+              above: labels[0], below: labels[1], symbol: cdArrowFunction);
         }
 
         row.add(EquationRowNode(children: [arrow!]));
