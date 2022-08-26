@@ -10,6 +10,12 @@ problems while `flutter_math` is not being maintained.
 
 ---
 
+### Modification by taoma2011
+
+Following the original code, I port some of the Katex CD(commutative diagram) code to this plugin.
+I used this in [MXTNote app](https://note.mxtsoft.com)
+
+---
 
 
 Math equation rendering in pure Dart & Flutter. 
